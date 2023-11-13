@@ -5,8 +5,24 @@ from PIL import Image
 from modules import shared, images, devices, scripts, scripts_postprocessing, ui_common, generation_parameters_copypaste
 from modules.shared import opts
 
+import gradio as gr
 
-def run_postprocessing(extras_mode, image, image_folder, input_dir, output_dir, show_extras_results, *args, save_output: bool = True):
+def run_postprocessing(request:gr.Request, extras_mode, image, image_folder, input_dir, output_dir, show_extras_results, *args, save_output: bool = True):
+    
+    if len(opts.outdir_samples) != 0: # If not empty
+        opts.outdir_samples =  "\\".join(opts.outdir_samples.rsplit("\\", 1)[:-1]) # Cutting [user]
+        opts.outdir_samples += f"\\{request.username}" # Adding new username
+    else:
+        last = opts.outdir_extras_samples.split("\\")[-1]
+        opts.outdir_extras_samples = "\\".join(opts.outdir_extras_samples.rsplit("\\")[:-2]) # Cutting last two parts
+        opts.outdir_extras_samples += f"\\{request.username}" # Adding new username
+        opts.outdir_extras_samples += f"\\{last}" # Adding last folder
+
+    if len(opts.outdir_grids) != 0: # If not empty
+        opts.outdir_grids = "\\".join(opts.outdir_grids.rsplit("\\", 1)[:-1])
+        opts.outdir_grids += f"\\{request.username}"
+    
+    
     devices.torch_gc()
 
     shared.state.begin(job="extras")
