@@ -503,10 +503,20 @@ def list_available_networks():
 
     candidates = list(shared.walk_files(shared.cmd_opts.lora_dir, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
     candidates += list(shared.walk_files(shared.cmd_opts.lyco_dir_backcompat, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
+
+
+    # ---------------------------
+    import modules.ui_extra_networks as extraNet
+
     for filename in candidates:
-        if os.path.isdir(filename):
+        relative_filename = filename.replace(shared.cmd_opts.lora_dir, "") # Cutting the general form of the path to keep only the subdirectories
+        # Only in multiuser mode
+        # We are skipping the networks that aren't in the common folder / aren't in the user's folder
+        if shared.cmd_opts.multiUser and (not (relative_filename.__contains__(extraNet.pseudo) or relative_filename.__contains__("common"))):
             continue
 
+        if os.path.isdir(filename):
+            continue
         name = os.path.splitext(os.path.basename(filename))[0]
         try:
             entry = network.NetworkOnDisk(name, filename)

@@ -15,6 +15,11 @@ from modules.ui_components import ToolButton
 extra_pages = []
 allowed_dirs = set()
 
+global pseudo
+pseudo = "None"
+def callPseudonym(req:gr.Request):
+    global pseudo
+    pseudo = req.username
 
 def register_page(page):
     """registers extra networks page for the UI; recommend doing it in on_before_ui() callback for extensions"""
@@ -147,6 +152,10 @@ class ExtraNetworksPage:
 
                     if ("/." in subdir or subdir.startswith(".")) and not shared.opts.extra_networks_show_hidden_directories:
                         continue
+                    
+                    # Only in multiUser mode
+                    if shared.cmd_opts.multiUser and (not (subdir.__contains__(pseudo) or subdir.__contains__("common"))): # Skipping subdir that doesn't belong to the current user / isn't common
+                        continue
 
                     subdirs[subdir] = 1
 
@@ -212,10 +221,13 @@ class ExtraNetworksPage:
         background_image = f'<img src="{html.escape(preview)}" class="preview" loading="lazy">' if preview else ''
         metadata_button = ""
         metadata = item.get("metadata")
-        if metadata:
-            metadata_button = f"<div class='metadata-button card-button' title='Show internal metadata' onclick='extraNetworksRequestMetadata(event, {quote_js(self.name)}, {quote_js(item['name'])})'></div>"
+        if not shared.cmd_opts.multiUser:
+            if metadata:
+                metadata_button = f"<div class='metadata-button card-button' title='Show internal metadata' onclick='extraNetworksRequestMetadata(event, {quote_js(self.name)}, {quote_js(item['name'])})'></div>"
 
-        edit_button = f"<div class='edit-button card-button' title='Edit metadata' onclick='extraNetworksEditUserMetadata(event, {quote_js(tabname)}, {quote_js(self.id_page)}, {quote_js(item['name'])})'></div>"
+            edit_button = f"<div class='edit-button card-button' title='Edit metadata' onclick='extraNetworksEditUserMetadata(event, {quote_js(tabname)}, {quote_js(self.id_page)}, {quote_js(item['name'])})'></div>"
+        else:
+            edit_button = ""
 
         local_path = ""
         filename = item.get("filename", "")
@@ -387,11 +399,20 @@ def create_ui(interface: gr.Blocks, unrelated_tabs, tabname):
     for tab in related_tabs:
         tab.select(fn=lambda: [gr.update(visible=True) for _ in range(5)], inputs=[], outputs=[edit_search, dropdown_sort, button_sortorder, button_refresh, checkbox_show_dirs], show_progress=False)
 
+
+    def pagesWrp(req:gr.Request):
+        callPseudonym(req)
+        return pages_html()
+
     def pages_html():
         if not ui.pages_contents:
             return refresh()
 
         return ui.pages_contents
+
+    def refWrp(req:gr.Request):
+        callPseudonym(req)
+        return refresh()
 
     def refresh():
         for pg in ui.stored_extra_pages:
@@ -401,8 +422,9 @@ def create_ui(interface: gr.Blocks, unrelated_tabs, tabname):
 
         return ui.pages_contents
 
-    interface.load(fn=pages_html, inputs=[], outputs=[*ui.pages])
-    button_refresh.click(fn=refresh, inputs=[], outputs=ui.pages)
+    interface.load(fn=pagesWrp, inputs=[], outputs=[*ui.pages])
+    button_refresh.click(fn=refWrp, inputs=[], outputs=ui.pages)
+    tab.select(fn=refWrp, inputs=[], outputs=ui.pages)
 
     return ui
 
