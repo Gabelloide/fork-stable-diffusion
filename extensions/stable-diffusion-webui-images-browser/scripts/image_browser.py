@@ -390,13 +390,15 @@ def reduplicative_file_move(src, dst):
 
 def save_image(file_name, filenames, page_index, turn_page_switch, dest_path, req:gr.Request):
     callPseudonym(req)
-    if dest_path.__contains__("favorites"):
-        # SAVE
-        last = opts.outdir_save.split("\\")[-1]
-        opts.outdir_save = "\\".join(opts.outdir_save.rsplit("\\")[:-2]) # Cutting last two parts
-        opts.outdir_save += f"\\{pseudo}" # Adding new username
-        opts.outdir_save += f"\\{last}" # Adding last folder
-        dest_path = opts.outdir_save
+
+    if cmd_opts.multiUser: # Only if multiUser mode
+        if dest_path.__contains__("favorites"):
+            # SAVE
+            last = opts.outdir_save.split("\\")[-1]
+            opts.outdir_save = "\\".join(opts.outdir_save.rsplit("\\")[:-2]) # Cutting last two parts
+            opts.outdir_save += f"\\{pseudo}" # Adding new username
+            opts.outdir_save += f"\\{last}" # Adding last folder
+            dest_path = opts.outdir_save
 
     if file_name is not None and os.path.exists(file_name):
         reduplicative_file_move(file_name, dest_path)
@@ -760,52 +762,52 @@ def get_all_images(dir_name, sort_by, sort_order, keyword, tab_base_tag_box, img
     current_depth = 0
 
     # ------------------------------------------------------------------------
+    if cmd_opts.multiUser: # Only if multiUser mode
 
-    if len(opts.outdir_samples) != 0: # If not empty
-        opts.outdir_samples =  "\\".join(opts.outdir_samples.rsplit("\\", 1)[:-1])
-        opts.outdir_samples += f"\\{pseudo}" # Adding new username
-    else:
-        # TXT2IMG SAMPLES
-        last = opts.outdir_txt2img_samples.split("\\")[-1]
-        opts.outdir_txt2img_samples = "\\".join( opts.outdir_txt2img_samples.rsplit("\\")[:-2])
-        opts.outdir_txt2img_samples += f"\\{pseudo}" # Adding new username
-        opts.outdir_txt2img_samples += f"\\{last}" # Adding last folder
+        if len(opts.outdir_samples) != 0: # If not empty
+            opts.outdir_samples =  "\\".join(opts.outdir_samples.rsplit("\\", 1)[:-1])
+            opts.outdir_samples += f"\\{pseudo}" # Adding new username
+        else:
+            # TXT2IMG SAMPLES
+            last = opts.outdir_txt2img_samples.split("\\")[-1]
+            opts.outdir_txt2img_samples = "\\".join( opts.outdir_txt2img_samples.rsplit("\\")[:-2])
+            opts.outdir_txt2img_samples += f"\\{pseudo}" # Adding new username
+            opts.outdir_txt2img_samples += f"\\{last}" # Adding last folder
 
-        # IMG2IMG SAMPLES
-        last = opts.outdir_img2img_samples.split("\\")[-1]
-        opts.outdir_img2img_samples = "\\".join(opts.outdir_img2img_samples.rsplit("\\")[:-2])
-        opts.outdir_img2img_samples += f"\\{pseudo}" # Adding new username
-        opts.outdir_img2img_samples += f"\\{last}" # Adding last folder
+            # IMG2IMG SAMPLES
+            last = opts.outdir_img2img_samples.split("\\")[-1]
+            opts.outdir_img2img_samples = "\\".join(opts.outdir_img2img_samples.rsplit("\\")[:-2])
+            opts.outdir_img2img_samples += f"\\{pseudo}" # Adding new username
+            opts.outdir_img2img_samples += f"\\{last}" # Adding last folder
 
-        # EXTRAS
-        last = opts.outdir_extras_samples.split("\\")[-1]
-        opts.outdir_extras_samples = "\\".join(opts.outdir_extras_samples.rsplit("\\")[:-2])
-        opts.outdir_extras_samples += f"\\{pseudo}" # Adding new username
-        opts.outdir_extras_samples += f"\\{last}" # Adding last folder
-
-
-    if len(opts.outdir_grids) != 0: # If not empty
-        opts.outdir_grids = "\\".join(opts.outdir_grids.rsplit("\\", 1)[:-1])
-        opts.outdir_grids += f"\\{pseudo}"
-    else:
-        # TXT2IMG GRIDS
-        last = opts.outdir_txt2img_grids.split("\\")[-1]
-        opts.outdir_txt2img_grids = "\\".join(opts.outdir_txt2img_grids.rsplit("\\")[:-2])
-        opts.outdir_txt2img_grids += f"\\{pseudo}" # Adding new username
-        opts.outdir_txt2img_grids += f"\\{last}" # Adding last folder
-        
-        # IMG2IMG GRIDS
-        last = opts.outdir_img2img_grids.split("\\")[-1]
-        opts.outdir_img2img_grids = "\\".join(opts.outdir_img2img_grids.rsplit("\\")[:-2])
-        opts.outdir_img2img_grids += f"\\{pseudo}" # Adding new username
-        opts.outdir_img2img_grids += f"\\{last}" # Adding last folder
+            # EXTRAS
+            last = opts.outdir_extras_samples.split("\\")[-1]
+            opts.outdir_extras_samples = "\\".join(opts.outdir_extras_samples.rsplit("\\")[:-2])
+            opts.outdir_extras_samples += f"\\{pseudo}" # Adding new username
+            opts.outdir_extras_samples += f"\\{last}" # Adding last folder
 
 
-    # SAVE
-    last = opts.outdir_save.split("\\")[-1]
-    opts.outdir_save = "\\".join(opts.outdir_save.rsplit("\\")[:-2]) # Cutting two last parts
-    opts.outdir_save += f"\\{pseudo}" # Adding new username
-    opts.outdir_save += f"\\{last}" # Adding last folder
+        if len(opts.outdir_grids) != 0: # If not empty
+            opts.outdir_grids = "\\".join(opts.outdir_grids.rsplit("\\", 1)[:-1])
+            opts.outdir_grids += f"\\{pseudo}"
+        else:
+            # TXT2IMG GRIDS
+            last = opts.outdir_txt2img_grids.split("\\")[-1]
+            opts.outdir_txt2img_grids = "\\".join(opts.outdir_txt2img_grids.rsplit("\\")[:-2])
+            opts.outdir_txt2img_grids += f"\\{pseudo}" # Adding new username
+            opts.outdir_txt2img_grids += f"\\{last}" # Adding last folder
+            
+            # IMG2IMG GRIDS
+            last = opts.outdir_img2img_grids.split("\\")[-1]
+            opts.outdir_img2img_grids = "\\".join(opts.outdir_img2img_grids.rsplit("\\")[:-2])
+            opts.outdir_img2img_grids += f"\\{pseudo}" # Adding new username
+            opts.outdir_img2img_grids += f"\\{last}" # Adding last folder
+
+        # SAVE
+        last = opts.outdir_save.split("\\")[-1]
+        opts.outdir_save = "\\".join(opts.outdir_save.rsplit("\\")[:-2]) # Cutting two last parts
+        opts.outdir_save += f"\\{pseudo}" # Adding new username
+        opts.outdir_save += f"\\{last}" # Adding last folder
 
     # Redefining paths for image browser in the dictionnary
     path_maps["txt2img"] =  opts.outdir_samples or opts.outdir_txt2img_samples 
@@ -820,17 +822,18 @@ def get_all_images(dir_name, sort_by, sort_order, keyword, tab_base_tag_box, img
         if not os.path.exists(path):
             os.makedirs(path)
 
-    # Editing dir_name to take the username into account
-    # First case : we want to browse in a path that contains "[user]" and nothing after
-    if dir_name.endswith("[user]"):
-        debut = dir_name.split("[user]")[0] # Cutting user
-        dir_name = debut + pseudo # Adding username
+    if cmd_opts.multiUser: # Only if multiUser mode
+        # Editing dir_name to take the username into account
+        # First case : we want to browse in a path that contains "[user]" and nothing after
+        if dir_name.endswith("[user]"):
+            debut = dir_name.split("[user]")[0] # Cutting user
+            dir_name = debut + pseudo # Adding username
 
-    # browsing inside a path that has something after [user]
-    else:
-        last = dir_name.split("\\")[-1]
-        dir_name = "\\".join(dir_name.rsplit("\\")[:-2]) # Cutting two last parts
-        dir_name += ("\\" + pseudo + "\\" + last) # Adding username and the last part at the end of the path
+        # browsing inside a path that has something after [user]
+        else:
+            last = dir_name.split("\\")[-1]
+            dir_name = "\\".join(dir_name.rsplit("\\")[:-2]) # Cutting two last parts
+            dir_name += ("\\" + pseudo + "\\" + last) # Adding username and the last part at the end of the path
 
     # ------------------------------------------------------------------------
 
