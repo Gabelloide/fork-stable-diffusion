@@ -168,6 +168,8 @@ def create_output_panel(tabname, outdir):
             outdir = shared.opts.outdir_txt2img_samples
         elif tabname == "img2img":
             outdir = shared.opts.outdir_img2img_samples
+        elif tabname == "extras":
+            outdir = shared.opts.outdir_extras_samples
 
         f = shared.opts.outdir_samples or outdir
         return open_folder(f)
