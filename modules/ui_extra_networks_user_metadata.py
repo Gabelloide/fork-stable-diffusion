@@ -5,7 +5,7 @@ import os.path
 
 import gradio as gr
 
-from modules import generation_parameters_copypaste, images, sysinfo, errors, ui_extra_networks
+from modules import generation_parameters_copypaste, images, sysinfo, errors, ui_extra_networks, shared
 
 
 class UserMetadataEditor:
@@ -136,7 +136,7 @@ class UserMetadataEditor:
         with open(basename + '.json', "w", encoding="utf8") as file:
             json.dump(metadata, file, indent=4)
 
-    def save_user_metadata(self, name, desc, notes):
+    def save_user_metadata(self, name, desc, notes, req:gr.Request):
         user_metadata = self.get_user_metadata(name)
         user_metadata["description"] = desc
         user_metadata["notes"] = notes
@@ -170,7 +170,7 @@ class UserMetadataEditor:
 
             self.create_editor()
 
-    def save_preview(self, index, gallery, name):
+    def save_preview(self, index, gallery, name, req:gr.Request):
         if len(gallery) == 0:
             return self.get_card_html(name), "There is no image in gallery to save as a preview."
 
