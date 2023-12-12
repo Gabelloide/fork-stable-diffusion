@@ -21,6 +21,12 @@ restricted_opts = {
     "outdir_init_images"
 }
 
+if cmd_opts.invisibleSettings and not cmd_opts.hide_ui_dir_config: # Less restrictions if launched with --invisibleSettings AND WITHOUT hide_ui_dir_config
+    restricted_opts = {
+    "samples_filename_pattern",
+    "directories_filename_pattern"
+}
+
 options_templates.update(options_section(('saving-images', "Saving images/grids"), {
     "samples_save": OptionInfo(True, "Always save all generated images"),
     "samples_format": OptionInfo('png', 'File format for images'),

@@ -118,3 +118,4 @@ parser.add_argument('--timeout-keep-alive', type=int, default=30, help='set time
 parser.add_argument("--disable-all-extensions", action='store_true', help="prevent all extensions from running regardless of any other settings", default=False)
 parser.add_argument("--disable-extra-extensions", action='store_true', help=" prevent all extensions except built-in from running regardless of any other settings", default=False)
 parser.add_argument("--multiUser", action="store_true", help="Launch application in multiUser mode : paths are considered personnal")
+parser.add_argument("--invisibleSettings", action="store_true", help="Same behaviour as hide-ui-dir-config to hide directory configuration in the WebUI : however, it does not prevent editing inside the app (code side)")

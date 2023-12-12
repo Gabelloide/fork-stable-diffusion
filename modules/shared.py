@@ -13,7 +13,7 @@ batch_cond_uncond = True  # old field, unused now in favor of shared.opts.batch_
 parallel_processing_allowed = True
 styles_filename = cmd_opts.styles_file
 config_filename = cmd_opts.ui_settings_file
-hide_dirs = {"visible": not cmd_opts.hide_ui_dir_config}
+hide_dirs = {"visible": not (cmd_opts.hide_ui_dir_config or cmd_opts.invisibleSettings)}
 
 demo = None
 
