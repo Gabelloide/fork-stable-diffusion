@@ -14,21 +14,24 @@ def txt2img(id_task: str, prompt: str, negative_prompt: str, prompt_styles, step
 
     if cmd_opts.multiUser: # Only if multiUser mode
         if len(opts.outdir_samples) != 0: # If not empty
-            opts.outdir_samples =  "\\".join(opts.outdir_samples.rsplit("\\", 1)[:-1]) # Cutting [user]
+            last = opts.outdir_samples.split("\\")[-1]
+            opts.outdir_samples = "\\".join( opts.outdir_samples.rsplit("\\")[:-2]) # Cutting last two parts
             opts.outdir_samples += f"\\{request.username}" # Adding new username
+            opts.outdir_samples += f"\\{last}" # Adding last folder
         else:
-            last = opts.outdir_txt2img_samples.split("\\")[-1]
-            opts.outdir_txt2img_samples = "\\".join( opts.outdir_txt2img_samples.rsplit("\\")[:-2]) # Cutting last two parts
+            last = "\\".join(opts.outdir_txt2img_samples.split("\\")[-2:]) # Keeping last two parts
+            opts.outdir_txt2img_samples = "\\".join( opts.outdir_txt2img_samples.rsplit("\\")[:-3]) # Cutting last three parts
             opts.outdir_txt2img_samples += f"\\{request.username}" # Adding new username
-            opts.outdir_txt2img_samples += f"\\{last}" # Adding last folder
-
+            opts.outdir_txt2img_samples += f"\\{last}" # Adding last two folders
 
         if len(opts.outdir_grids) != 0: # If not empty
-            opts.outdir_grids = "\\".join(opts.outdir_grids.rsplit("\\", 1)[:-1])
-            opts.outdir_grids += f"\\{request.username}"
+            last = opts.outdir_grids.split("\\")[-1]
+            opts.outdir_grids = "\\".join(opts.outdir_grids.rsplit("\\")[:-2])
+            opts.outdir_grids += f"\\{request.username}" # Adding new username
+            opts.outdir_grids += f"\\{last}" # Adding last folder
         else:
-            last = opts.outdir_txt2img_grids.split("\\")[-1]
-            opts.outdir_txt2img_grids = "\\".join(opts.outdir_txt2img_grids.rsplit("\\")[:-2])
+            last = "\\".join(opts.outdir_txt2img_grids.split("\\")[-2:])
+            opts.outdir_txt2img_grids = "\\".join(opts.outdir_txt2img_grids.rsplit("\\")[:-3])
             opts.outdir_txt2img_grids += f"\\{request.username}" # Adding new username
             opts.outdir_txt2img_grids += f"\\{last}" # Adding last folder
 

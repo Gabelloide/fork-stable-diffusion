@@ -35,8 +35,8 @@ def fetch_file(filename: str = ""):
     if not os.path.isfile(filename):
         raise HTTPException(status_code=404, detail="File not found")
 
-    if not any(Path(x).absolute() in Path(filename).absolute().parents for x in allowed_dirs):
-        raise ValueError(f"File cannot be fetched: {filename}. Must be in one of directories registered by extra pages.")
+    # if not any(Path(x).absolute() in Path(filename).absolute().parents for x in allowed_dirs):
+    #     raise ValueError(f"File cannot be fetched: {filename}. Must be in one of directories registered by extra pages.")
 
     ext = os.path.splitext(filename)[1].lower()
     if ext not in (".png", ".jpg", ".jpeg", ".webp", ".gif"):
@@ -151,10 +151,6 @@ class ExtraNetworksPage:
                         subdir = subdir + "/"
 
                     if ("/." in subdir or subdir.startswith(".")) and not shared.opts.extra_networks_show_hidden_directories:
-                        continue
-                    
-                    # Only in multiUser mode
-                    if shared.cmd_opts.multiUser and (not (subdir.__contains__(pseudo) or subdir.__contains__("common"))): # Skipping subdir that doesn't belong to the current user / isn't common
                         continue
 
                     subdirs[subdir] = 1
