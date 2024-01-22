@@ -139,6 +139,9 @@ def checkpoint_tiles(use_short=False):
     l.append("None")
     return l
 
+def checkpoint_tilesNoRef(use_short=False):
+    l = [x.short_title if use_short else x.title for x in checkpoints_list.values() if x.title.__contains__("refiner")]
+    return l
 
 def list_models():
     checkpoints_list.clear()

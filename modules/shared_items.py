@@ -48,6 +48,9 @@ def list_checkpoint_tiles():
     import modules.sd_models
     return modules.sd_models.checkpoint_tiles()
 
+def list_checkpoint_tilesNoRef():
+    import modules.sd_models
+    return modules.sd_models.checkpoint_tilesNoRef()
 
 def refresh_checkpoints():
     import modules.sd_models
