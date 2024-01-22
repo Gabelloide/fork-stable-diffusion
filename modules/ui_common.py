@@ -40,10 +40,10 @@ def save_files(js_data, images, do_make_zip, index, req:gr.Request):
 
     if shared.cmd_opts.multiUser: # Only if multiUser mode
         # SAVE
-        last = "\\".join(shared.opts.outdir_save.split("\\")[-2:])
-        shared.opts.outdir_save = "\\".join(shared.opts.outdir_save.rsplit("\\")[:-3]) # Cutting last three folders
+        last = shared.opts.outdir_save.split("\\")[-1]
+        shared.opts.outdir_save = "\\".join(shared.opts.outdir_save.rsplit("\\")[:-2]) # Cutting last two parts
         shared.opts.outdir_save += f"\\{pseudo}" # Adding new username
-        shared.opts.outdir_save += f"\\{last}" # Adding last two folder
+        shared.opts.outdir_save += f"\\{last}" # Adding last folder
         
     import csv
     filenames = []
@@ -121,50 +121,46 @@ def create_output_panel(tabname, outdir):
 
         if shared.cmd_opts.multiUser: # Only if multiUser mode
             if len(shared.opts.outdir_samples) != 0: # If not empty
-                last = shared.opts.outdir_samples.split("\\")[-1]
-                shared.opts.outdir_samples = "\\".join( shared.opts.outdir_samples.rsplit("\\")[:-2]) # Cutting last two parts
-                shared.opts.outdir_samples += f"\\{request.username}" # Adding new username
-                shared.opts.outdir_samples += f"\\{last}" # Adding last folder
+                shared.opts.outdir_samples =  "\\".join(shared.opts.outdir_samples.rsplit("\\", 1)[:-1]) # Cutting [user]
+                shared.opts.outdir_samples += f"\\{pseudo}" # Adding new username
             else:
                 # TXT2IMG SAMPLES
-                last = "\\".join(shared.opts.outdir_txt2img_samples.split("\\")[-2:]) # Keeping last two parts
-                shared.opts.outdir_txt2img_samples = "\\".join( shared.opts.outdir_txt2img_samples.rsplit("\\")[:-3]) # Cutting last three parts
-                shared.opts.outdir_txt2img_samples += f"\\{request.username}" # Adding new username
-                shared.opts.outdir_txt2img_samples += f"\\{last}" # Adding last two folders
+                last = shared.opts.outdir_txt2img_samples.split("\\")[-1]
+                shared.opts.outdir_txt2img_samples = "\\".join( shared.opts.outdir_txt2img_samples.rsplit("\\")[:-2]) # Cutting last two folders
+                shared.opts.outdir_txt2img_samples += f"\\{pseudo}" # Adding new username
+                shared.opts.outdir_txt2img_samples += f"\\{last}" # Adding last folder
                 # IMG2IMG SAMPLES
-                last = "\\".join(shared.opts.outdir_img2img_samples.split("\\")[-2:]) # Keeping last two parts
-                shared.opts.outdir_img2img_samples = "\\".join( shared.opts.outdir_img2img_samples.rsplit("\\")[:-3]) # Cutting last three parts
-                shared.opts.outdir_img2img_samples += f"\\{request.username}" # Adding new username
-                shared.opts.outdir_img2img_samples += f"\\{last}" # Adding last two folders
+                last = shared.opts.outdir_img2img_samples.split("\\")[-1]
+                shared.opts.outdir_img2img_samples = "\\".join(shared.opts.outdir_img2img_samples.rsplit("\\")[:-2]) # Cutting last two folders
+                shared.opts.outdir_img2img_samples += f"\\{pseudo}" # Adding new username
+                shared.opts.outdir_img2img_samples += f"\\{last}" # Adding last folder
                 # EXTRAS
-                last = "\\".join(shared.opts.outdir_extras_samples.split("\\")[-2:]) # Keeping last two parts
-                shared.opts.outdir_extras_samples = "\\".join(shared.opts.outdir_extras_samples.rsplit("\\")[:-3]) # Cutting last three parts
-                shared.opts.outdir_extras_samples += f"\\{request.username}" # Adding new username
-                shared.opts.outdir_extras_samples += f"\\{last}" # Adding last two folder
+                last = shared.opts.outdir_extras_samples.split("\\")[-1]
+                shared.opts.outdir_extras_samples = "\\".join(shared.opts.outdir_extras_samples.rsplit("\\")[:-2]) # Cutting last two folders
+                shared.opts.outdir_extras_samples += f"\\{pseudo}" # Adding new username
+                shared.opts.outdir_extras_samples += f"\\{last}" # Adding last folder
 
             if len(shared.opts.outdir_grids) != 0: # If not empty
-                last = shared.opts.outdir_grids.split("\\")[-1]
-                shared.opts.outdir_grids = "\\".join(shared.opts.outdir_grids.rsplit("\\")[:-2])
-                shared.opts.outdir_grids += f"\\{request.username}" # Adding new username
-                shared.opts.outdir_grids += f"\\{last}" # Adding last folder
+                shared.opts.outdir_grids = "\\".join(shared.opts.outdir_grids.rsplit("\\", 1)[:-1])
+                shared.opts.outdir_grids += f"\\{pseudo}"
             else:
                 # TXT2IMG GRIDS
-                last = "\\".join(shared.opts.outdir_txt2img_grids.split("\\")[-2:])
-                shared.opts.outdir_txt2img_grids = "\\".join(shared.opts.outdir_txt2img_grids.rsplit("\\")[:-3])
-                shared.opts.outdir_txt2img_grids += f"\\{request.username}" # Adding new username
+                last = shared.opts.outdir_txt2img_grids.split("\\")[-1]
+                shared.opts.outdir_txt2img_grids = "\\".join(shared.opts.outdir_txt2img_grids.rsplit("\\")[:-2])
+                shared.opts.outdir_txt2img_grids += f"\\{pseudo}" # Adding new username
                 shared.opts.outdir_txt2img_grids += f"\\{last}" # Adding last folder
 
                 # IMG2IMG GRIDS
-                last = "\\".join(shared.opts.outdir_img2img_grids.split("\\")[-2:])
-                shared.opts.outdir_img2img_grids = "\\".join(shared.opts.outdir_img2img_grids.rsplit("\\")[:-3])
-                shared.opts.outdir_img2img_grids += f"\\{request.username}" # Adding new username
+                last = shared.opts.outdir_img2img_grids.split("\\")[-1]
+                shared.opts.outdir_img2img_grids = "\\".join(shared.opts.outdir_img2img_grids.rsplit("\\")[:-2])
+                shared.opts.outdir_img2img_grids += f"\\{pseudo}" # Adding new username
                 shared.opts.outdir_img2img_grids += f"\\{last}" # Adding last folder
 
             # SAVE
-            last = "\\".join(shared.opts.outdir_save.split("\\")[-2:])
-            shared.opts.outdir_save = "\\".join(shared.opts.outdir_save.rsplit("\\")[:-3]) # Cutting last three folders
+            last = shared.opts.outdir_save.split("\\")[-1]
+            shared.opts.outdir_save = "\\".join(shared.opts.outdir_save.rsplit("\\")[:-2]) # Cutting last two folders
             shared.opts.outdir_save += f"\\{pseudo}" # Adding new username
-            shared.opts.outdir_save += f"\\{last}" # Adding last two folder
+            shared.opts.outdir_save += f"\\{last}" # Adding last folder
 
         # The outdir argument is passed by ui.py to the create_output_panel function which contanins this function
         # We are refreshing it
@@ -172,9 +168,8 @@ def create_output_panel(tabname, outdir):
             outdir = shared.opts.outdir_txt2img_samples
         elif tabname == "img2img":
             outdir = shared.opts.outdir_img2img_samples
-        elif tabname == "extras":
+        elif tabname =="extras":
             outdir = shared.opts.outdir_extras_samples
-
         f = shared.opts.outdir_samples or outdir
         return open_folder(f)
 

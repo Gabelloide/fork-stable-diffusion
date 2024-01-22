@@ -119,4 +119,3 @@ parser.add_argument("--disable-all-extensions", action='store_true', help="preve
 parser.add_argument("--disable-extra-extensions", action='store_true', help=" prevent all extensions except built-in from running regardless of any other settings", default=False)
 parser.add_argument("--multiUser", action="store_true", help="Launch application in multiUser mode : paths are considered personnal")
 parser.add_argument("--invisibleSettings", action="store_true", help="Same behaviour as hide-ui-dir-config to hide directory configuration in the WebUI : however, it does not prevent editing inside the app (code side)")
-parser.add_argument("--common-lora-dir", type=str, help="Path for common Loras in multiUser mode.", default=None)

@@ -11,21 +11,17 @@ def run_postprocessing(request:gr.Request, extras_mode, image, image_folder, inp
     
     if cmd_opts.multiUser: # Only if multiUser mode
         if len(opts.outdir_samples) != 0: # If not empty
-            last = opts.outdir_samples.split("\\")[-1]
-            opts.outdir_samples = "\\".join(opts.outdir_samples.rsplit("\\")[:-2]) # Cutting last two parts
+            opts.outdir_samples =  "\\".join(opts.outdir_samples.rsplit("\\", 1)[:-1]) # Cutting [user]
             opts.outdir_samples += f"\\{request.username}" # Adding new username
-            opts.outdir_samples += f"\\{last}" # Adding last folder
         else:
-            last = "\\".join(opts.outdir_extras_samples.split("\\")[-2:]) # Keeping last two parts
-            opts.outdir_extras_samples = "\\".join(opts.outdir_extras_samples.rsplit("\\")[:-3]) # Cutting last three parts
+            last = opts.outdir_extras_samples.split("\\")[-1]
+            opts.outdir_extras_samples = "\\".join(opts.outdir_extras_samples.rsplit("\\")[:-2]) # Cutting last two parts
             opts.outdir_extras_samples += f"\\{request.username}" # Adding new username
-            opts.outdir_extras_samples += f"\\{last}" # Adding last two folder
+            opts.outdir_extras_samples += f"\\{last}" # Adding last folder
 
         if len(opts.outdir_grids) != 0: # If not empty
-            last = opts.outdir_grids.split("\\")[-1]
-            opts.outdir_grids = "\\".join(opts.outdir_grids.rsplit("\\")[:-2])
-            opts.outdir_grids += f"\\{request.username}" # Adding new username
-            opts.outdir_grids += f"\\{last}" # Adding last folder
+            opts.outdir_grids = "\\".join(opts.outdir_grids.rsplit("\\", 1)[:-1])
+            opts.outdir_grids += f"\\{request.username}"
     
     devices.torch_gc()
 

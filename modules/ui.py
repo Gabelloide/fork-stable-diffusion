@@ -435,11 +435,6 @@ def create_ui():
             txt2img_gallery, generation_info, html_info, html_log = create_output_panel("txt2img", opts.outdir_txt2img_samples)
 
 
-
-            # Upscaler value at 1 when no upscaler is selected
-            hr_upscaler.change(fn=(lambda x: gr.update(value=1)  if x == "None" else gr.update(value=2)), inputs=[hr_upscaler], outputs=[hr_scale])
-
-
             
             txt2img_args = dict(
                 fn=wrap_gradio_gpu_call(modules.txt2img.txt2img, extra_outputs=[None, '', '']),
@@ -1256,9 +1251,9 @@ def create_ui():
         (txt2img_interface, "txt2img", "txt2img"),
         (img2img_interface, "img2img", "img2img"),
         (extras_interface, "Extras", "extras"),
-        (pnginfo_interface, "PNG Info", "pnginfo"),
-        (modelmerger_ui.blocks, "Checkpoint Merger", "modelmerger"),
-        (train_interface, "Train", "train")
+        (pnginfo_interface, "PNG Info", "pnginfo")
+	     #(modelmerger_ui.blocks, "Checkpoint Merger", "modelmerger")
+	     #(train_interface, "Train", "train")
     ]
 
     interfaces += script_callbacks.ui_tabs_callback()
@@ -1273,15 +1268,6 @@ def create_ui():
 
     with gr.Blocks(theme=shared.gradio_theme, analytics_enabled=False, title="Stable Diffusion") as demo:
         settings.add_quicksettings()
-
-
-        if os.path.isfile("logos/logo.png"):
-            test_img = gr.Image(value='logos/logo.png', show_download_button=False, show_label=False, interactive=False, show_share_button = False,
-                            height=100, width=100, container=False, elem_id='logo')
-        else:
-            print('\033[34m[LOGO]\033[0m  No image found at "logos/logo.png"')
-
-
 
         parameters_copypaste.connect_paste_params_buttons()
 
@@ -1379,3 +1365,4 @@ def setup_ui_api(app):
 
     app.add_api_route("/internal/sysinfo", download_sysinfo, methods=["GET"])
     app.add_api_route("/internal/sysinfo-download", lambda: download_sysinfo(attachment=True), methods=["GET"])
+
