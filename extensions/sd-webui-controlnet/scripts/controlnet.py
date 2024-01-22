@@ -19,7 +19,8 @@ from scripts.adapter import Adapter, StyleAdapter, Adapter_light
 from scripts.controlnet_lllite import PlugableControlLLLite, clear_all_lllite
 from scripts.controlmodel_ipadapter import PlugableIPAdapter, clear_all_ip_adapter
 from scripts.utils import load_state_dict, get_unique_axis0
-from scripts.hook import ControlParams, UnetHook, ControlModelType, HackedImageRNG
+from scripts.hook import ControlParams, UnetHook, HackedImageRNG
+from scripts.enums import ControlModelType, StableDiffusionVersion
 from scripts.controlnet_ui.controlnet_ui_group import ControlNetUiGroup, UiControlNetUnit
 from scripts.logging import logger
 from modules.processing import StableDiffusionProcessingImg2Img, StableDiffusionProcessingTxt2Img
@@ -35,16 +36,7 @@ from PIL import Image, ImageFilter, ImageOps
 from scripts.lvminthin import lvmin_thin, nake_nms
 from scripts.processor import model_free_preprocessors
 from scripts.controlnet_model_guess import build_model_by_guess
-
-
-gradio_compat = True
-try:
-    from distutils.version import LooseVersion
-    from importlib_metadata import version
-    if LooseVersion(version("gradio")) < LooseVersion("3.10"):
-        gradio_compat = False
-except ImportError:
-    pass
+from scripts.hook import torch_dfs
 
 
 # Gradio 3.32 bug fix
@@ -53,7 +45,17 @@ gradio_tempfile_path = os.path.join(tempfile.gettempdir(), 'gradio')
 os.makedirs(gradio_tempfile_path, exist_ok=True)
 
 
-def clear_all_secondary_control_models():
+def clear_all_secondary_control_models(m):
+    all_modules = torch_dfs(m)
+
+    for module in all_modules:
+        _original_inner_forward_cn_hijack = getattr(module, '_original_inner_forward_cn_hijack', None)
+        original_forward_cn_hijack = getattr(module, 'original_forward_cn_hijack', None)
+        if _original_inner_forward_cn_hijack is not None:
+            module._forward = _original_inner_forward_cn_hijack
+        if original_forward_cn_hijack is not None:
+            module.forward = original_forward_cn_hijack
+
     clear_all_lllite()
     clear_all_ip_adapter()
 
@@ -238,6 +240,7 @@ class Script(scripts.Script, metaclass=(
         self.detected_map = []
         self.post_processors = []
         self.noise_modifier = None
+        self.ui_batch_option_state = [external_code.BatchOption.DEFAULT.value, False]
         batch_hijack.instance.process_batch_callbacks.append(self.batch_tab_process)
         batch_hijack.instance.process_batch_each_callbacks.append(self.batch_tab_process_each)
         batch_hijack.instance.postprocess_batch_each_callbacks.insert(0, self.batch_tab_postprocess_each)
@@ -260,13 +263,51 @@ class Script(scripts.Script, metaclass=(
 
     def uigroup(self, tabname: str, is_img2img: bool, elem_id_tabname: str) -> Tuple[ControlNetUiGroup, gr.State]:
         group = ControlNetUiGroup(
-            gradio_compat,
             Script.get_default_ui_unit(),
             self.preprocessor,
         )
         group.render(tabname, elem_id_tabname, is_img2img)
         group.register_callbacks(is_img2img)
         return group, group.render_and_register_unit(tabname, is_img2img)
+
+    def ui_batch_options(self, is_img2img: bool, elem_id_tabname: str):
+        batch_option = gr.Radio(
+            choices=[e.value for e in external_code.BatchOption],
+            value=external_code.BatchOption.DEFAULT.value,
+            label="Batch Option",
+            elem_id=f"{elem_id_tabname}_controlnet_batch_option_radio",
+            elem_classes="controlnet_batch_option_radio",
+        )
+        use_batch_style_align = gr.Checkbox(
+            label='[StyleAlign] Align image style in the batch.'
+        )
+
+        unit_args = [batch_option, use_batch_style_align]
+
+        def update_ui_batch_options(*args):
+            self.ui_batch_option_state = args
+            return
+
+        for comp in unit_args:
+            event_subscribers = []
+            if hasattr(comp, "edit"):
+                event_subscribers.append(comp.edit)
+            elif hasattr(comp, "click"):
+                event_subscribers.append(comp.click)
+            elif isinstance(comp, gr.Slider) and hasattr(comp, "release"):
+                event_subscribers.append(comp.release)
+            elif hasattr(comp, "change"):
+                event_subscribers.append(comp.change)
+
+            if hasattr(comp, "clear"):
+                event_subscribers.append(comp.clear)
+
+            for event_subscriber in event_subscribers:
+                event_subscriber(
+                    fn=update_ui_batch_options, inputs=unit_args
+                )
+
+        return
 
     def ui(self, is_img2img):
         """this function should create gradio UI elements. See https://gradio.app/docs/#components
@@ -293,6 +334,8 @@ class Script(scripts.Script, metaclass=(
                         group, state = self.uigroup(f"ControlNet", is_img2img, elem_id_tabname)
                         infotext.register_unit(0, group)
                         controls += (state,)
+                with gr.Accordion(f"Batch Options", open=False, elem_id="controlnet_batch_options"):
+                    self.ui_batch_options(is_img2img, elem_id_tabname)
 
         if shared.opts.data.get("control_net_sync_field_args", True):
             self.infotext_fields = infotext.infotext_fields
@@ -637,6 +680,27 @@ class Script(scripts.Script, metaclass=(
                 setattr(unit, param, default_value)
                 logger.warning(f'[{unit.module}.{param}] Invalid value({value}), using default value {default_value}.')
 
+    def check_sd_version_compatible(unit: external_code.ControlNetUnit) -> None:
+        """
+        Checks whether the given ControlNet unit has model compatible with the currently 
+        active sd model. An exception is thrown if ControlNet unit is detected to be
+        incompatible.
+        """
+        # No need to check if the ControlModelType does not require model to be present.
+        if unit.model.lower() == "none":
+            return
+
+        sd_version = global_state.get_sd_version()
+        assert sd_version != StableDiffusionVersion.UNKNOWN
+        cnet_sd_version = StableDiffusionVersion.detect_from_model_name(unit.model)
+        
+        if cnet_sd_version == StableDiffusionVersion.UNKNOWN:
+            logger.warn(f"Unable to determine version for ControlNet model '{unit.model}'.")
+            return
+
+        if sd_version != cnet_sd_version:
+            raise Exception(f"ControlNet model {unit.model}({cnet_sd_version}) is not compatible with sd model({sd_version})")
+
     def controlnet_main_entry(self, p):
         sd_ldm = p.sd_model
         unet = sd_ldm.model.diffusion_model
@@ -649,14 +713,19 @@ class Script(scripts.Script, metaclass=(
             self.latest_network.restore()
 
         # always clear (~0.05s)
-        clear_all_secondary_control_models()
+        clear_all_secondary_control_models(unet)
 
         if not batch_hijack.instance.is_batch:
             self.enabled_units = Script.get_enabled_units(p)
 
-        if len(self.enabled_units) == 0:
+        batch_option_uint_separate = self.ui_batch_option_state[0] == external_code.BatchOption.SEPARATE.value
+        batch_option_style_align = self.ui_batch_option_state[1]
+
+        if len(self.enabled_units) == 0 and not batch_option_style_align:
            self.latest_network = None
            return
+
+        logger.info(f"unit_separate = {batch_option_uint_separate}, style_align = {batch_option_style_align}")
 
         detected_maps = []
         forward_params = []
@@ -678,6 +747,7 @@ class Script(scripts.Script, metaclass=(
         self.latest_model_hash = p.sd_model.sd_model_hash
         for idx, unit in enumerate(self.enabled_units):
             Script.bound_check_params(unit)
+            Script.check_sd_version_compatible(unit)
 
             resize_mode = external_code.resize_mode_from_value(unit.resize_mode)
             control_mode = external_code.control_mode_from_value(unit.control_mode)
@@ -811,11 +881,15 @@ class Script(scripts.Script, metaclass=(
                 thr_a=unit.threshold_a,
                 thr_b=unit.threshold_b,
             )
-
+            
+            def store_detected_map(detected_map, module: str) -> None:
+                if unit.save_detected_map:
+                    detected_maps.append((detected_map, module))
+            
             if high_res_fix:
                 if is_image:
                     hr_control, hr_detected_map = Script.detectmap_proc(detected_map, unit.module, resize_mode, hr_y, hr_x)
-                    detected_maps.append((hr_detected_map, unit.module))
+                    store_detected_map(hr_detected_map, unit.module)
                 else:
                     hr_control = detected_map
             else:
@@ -823,10 +897,10 @@ class Script(scripts.Script, metaclass=(
 
             if is_image:
                 control, detected_map = Script.detectmap_proc(detected_map, unit.module, resize_mode, h, w)
-                detected_maps.append((detected_map, unit.module))
+                store_detected_map(detected_map, unit.module)
             else:
                 control = detected_map
-                detected_maps.append((input_image, unit.module))
+                store_detected_map(input_image, unit.module)
 
             if control_model_type == ControlModelType.T2I_StyleAdapter:
                 control = control['last_hidden_state']
@@ -937,7 +1011,9 @@ class Script(scripts.Script, metaclass=(
         is_low_vram = any(unit.low_vram for unit in self.enabled_units)
 
         self.latest_network = UnetHook(lowvram=is_low_vram)
-        self.latest_network.hook(model=unet, sd_ldm=sd_ldm, control_params=forward_params, process=p)
+        self.latest_network.hook(model=unet, sd_ldm=sd_ldm, control_params=forward_params, process=p,
+                                 batch_option_uint_separate=batch_option_uint_separate,
+                                 batch_option_style_align=batch_option_style_align)
 
         for param in forward_params:
             if param.control_model_type == ControlModelType.IPAdapter:
@@ -973,7 +1049,7 @@ class Script(scripts.Script, metaclass=(
         return getattr(p, 'refiner_checkpoint', None) is not None
 
     def process(self, p, *args, **kwargs):
-        if not self.process_has_sdxl_refiner(p):
+        if not Script.process_has_sdxl_refiner(p):
             self.controlnet_hack(p)
         return
 
@@ -983,7 +1059,7 @@ class Script(scripts.Script, metaclass=(
                                    noise_modifier=self.noise_modifier,
                                    sd_model=p.sd_model)
         self.noise_modifier = None
-        if self.process_has_sdxl_refiner(p):
+        if Script.process_has_sdxl_refiner(p):
             self.controlnet_hack(p)
         return
 
@@ -995,7 +1071,10 @@ class Script(scripts.Script, metaclass=(
         return
 
     def postprocess(self, p, processed, *args):
-        clear_all_secondary_control_models()
+        sd_ldm = p.sd_model
+        unet = sd_ldm.model.diffusion_model
+
+        clear_all_secondary_control_models(unet)
 
         self.noise_modifier = None
 
@@ -1089,7 +1168,7 @@ def on_ui_settings():
     shared.opts.add_option("control_net_unit_count", shared.OptionInfo(
         3, "Multi-ControlNet: ControlNet unit number (requires restart)", gr.Slider, {"minimum": 1, "maximum": 10, "step": 1}, section=section))
     shared.opts.add_option("control_net_model_cache_size", shared.OptionInfo(
-        1, "Model cache size (requires restart)", gr.Slider, {"minimum": 1, "maximum": 5, "step": 1}, section=section))
+        1, "Model cache size (requires restart)", gr.Slider, {"minimum": 1, "maximum": 10, "step": 1}, section=section))
     shared.opts.add_option("control_net_inpaint_blur_sigma", shared.OptionInfo(
         7, "ControlNet inpainting Gaussian blur sigma", gr.Slider, {"minimum": 0, "maximum": 64, "step": 1}, section=section))
     shared.opts.add_option("control_net_no_high_res_fix", shared.OptionInfo(
@@ -1106,8 +1185,6 @@ def on_ui_settings():
         False, "Show batch images in gradio gallery output", gr.Checkbox, {"interactive": True}, section=section))
     shared.opts.add_option("controlnet_increment_seed_during_batch", shared.OptionInfo(
         False, "Increment seed after each controlnet batch iteration", gr.Checkbox, {"interactive": True}, section=section))
-    shared.opts.add_option("controlnet_disable_control_type", shared.OptionInfo(
-        False, "Disable control type selection", gr.Checkbox, {"interactive": True}, section=section))
     shared.opts.add_option("controlnet_disable_openpose_edit", shared.OptionInfo(
         False, "Disable openpose edit", gr.Checkbox, {"interactive": True}, section=section))
     shared.opts.add_option("controlnet_ignore_noninpaint_mask", shared.OptionInfo(

@@ -511,7 +511,7 @@ def list_available_networks():
     for filename in candidates:
         relative_filename = filename.replace(shared.cmd_opts.lora_dir, "") # Cutting the general form of the path to keep only the subdirectories
         # Only in multiuser mode
-        # Skipping the networks that aren't in the common folder / aren't in the user's folder
+        # We are skipping the networks that aren't in the common folder / aren't in the user's folder
         if shared.cmd_opts.multiUser and (not (relative_filename.__contains__(extraNet.pseudo) or relative_filename.__contains__("common"))):
             continue
 

@@ -620,6 +620,26 @@ def blur_gaussian(img, res=512, thr_a=1.0, **kwargs):
     return result, True
 
 
+model_anime_face_segment = None
+
+
+def anime_face_segment(img, res=512, **kwargs):
+    img, remove_pad = resize_image_with_pad(img, res)
+    global model_anime_face_segment
+    if model_anime_face_segment is None:
+        from annotator.anime_face_segment import AnimeFaceSegment
+        model_anime_face_segment = AnimeFaceSegment()
+
+    result = model_anime_face_segment(img)
+    return remove_pad(result), True
+
+
+def unload_anime_face_segment():
+    global model_anime_face_segment
+    if model_anime_face_segment is not None:
+        model_anime_face_segment.unload_model()
+
+
 model_free_preprocessors = [
     "reference_only",
     "reference_adain",
@@ -986,36 +1006,44 @@ preprocessor_sliders_config = {
             "step": 0.001
         }
     ],
+    "anime_face_segment": [
+        {
+            "name": flag_preprocessor_resolution,
+            "value": 512,
+            "min": 64,
+            "max": 2048
+        }
+    ],
 }
 
 preprocessor_filters = {
     "All": "none",
     "Canny": "canny",
     "Depth": "depth_midas",
-    # "NormalMap": "normal_bae",
+    "NormalMap": "normal_bae",
     "OpenPose": "openpose_full",
-    # "MLSD": "mlsd",
-    # "Lineart": "lineart_standard (from white bg & black line)",
+    "MLSD": "mlsd",
+    "Lineart": "lineart_standard (from white bg & black line)",
     "SoftEdge": "softedge_pidinet",
-    # "Scribble/Sketch": "scribble_pidinet",
-    # "Segmentation": "seg_ofade20k",
-    # "Shuffle": "shuffle",
-    # "Tile/Blur": "tile_resample",
-    # "Inpaint": "inpaint_only",
-    # "InstructP2P": "none",
-    # "Reference": "reference_only",
-    # "Recolor": "recolor_luminance",
-    # "Revision": "revision_clipvision",
-    # "T2I-Adapter": "none",
-    "IP-Adapter": "ip-adapter_clip_sdxl",
+    "Scribble/Sketch": "scribble_pidinet",
+    "Segmentation": "seg_ofade20k",
+    "Shuffle": "shuffle",
+    "Tile/Blur": "tile_resample",
+    "Inpaint": "inpaint_only",
+    "InstructP2P": "none",
+    "Reference": "reference_only",
+    "Recolor": "recolor_luminance",
+    "Revision": "revision_clipvision",
+    "T2I-Adapter": "none",
+    "IP-Adapter": "ip-adapter_clip_sd15",
 }
 
 preprocessor_filters_aliases = {
-    # 'instructp2p': ['ip2p'],
-    # 'segmentation': ['seg'],
-    # 'normalmap': ['normal'],
-    # 't2i-adapter': ['t2i_adapter', 't2iadapter', 't2ia'],
+    'instructp2p': ['ip2p'],
+    'segmentation': ['seg'],
+    'normalmap': ['normal'],
+    't2i-adapter': ['t2i_adapter', 't2iadapter', 't2ia'],
     'ip-adapter': ['ip_adapter', 'ipadapter'],
-    # 'scribble/sketch': ['scribble', 'sketch'],
-    # 'tile/blur': ['tile', 'blur']
+    'scribble/sketch': ['scribble', 'sketch'],
+    'tile/blur': ['tile', 'blur']
 }  # must use all lower texts
