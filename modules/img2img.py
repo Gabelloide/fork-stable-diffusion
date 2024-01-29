@@ -137,10 +137,10 @@ def img2img(id_task: str, mode: int, prompt: str, negative_prompt: str, prompt_s
             opts.outdir_img2img_grids += f"\\{request.username}" # Adding new username
             opts.outdir_img2img_grids += f"\\{last}" # Adding last folder
 
-    # Also updating outdir_init_images because img2img might need it if opts.save_init_img == True
-    if len(opts.outdir_init_images) != 0: # If not empty
-        opts.outdir_init_images =  "\\".join(opts.outdir_init_images.rsplit("\\")[:-2]) # Cutting init-images & [user]
-        opts.outdir_init_images += f"\\{request.username}" # Adding new username
+        # Also updating outdir_init_images because img2img might need it if opts.save_init_img == True
+        if len(opts.outdir_init_images) != 0: # If not empty
+            opts.outdir_init_images =  "\\".join(opts.outdir_init_images.rsplit("\\")[:-2]) # Cutting init-images & [user]
+            opts.outdir_init_images += f"\\{request.username}" # Adding new username
 
     override_settings = create_override_settings_dict(override_settings_texts)
 
